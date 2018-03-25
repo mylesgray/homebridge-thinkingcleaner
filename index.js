@@ -1,7 +1,7 @@
 /* 
-    TERMS OF USE
-    Open source under the MIT License.
-    Copyright 2016 Matthijs Logemann All rights reserved.
+TERMS OF USE
+Open source under the MIT License.
+Copyright 2016 Matthijs Logemann All rights reserved.
 */
 module.exports = init;
 
@@ -25,10 +25,10 @@ function ThinkingCleaner(log, config) {
 
 	this.informationService = new Service.AccessoryInformation();
 	this.informationService.setCharacteristic(Characteristic.Name, this.name)
-		.setCharacteristic(Characteristic.Manufacturer, "Thinking Bits")
-		.setCharacteristic(Characteristic.Model, "Thinking Cleaner")
-		.setCharacteristic(Characteristic.SerialNumber, "Unknown")
-		.setCharacteristic(Characteristic.FirmwareRevision, "Unknown");
+	.setCharacteristic(Characteristic.Manufacturer, "Thinking Bits")
+	.setCharacteristic(Characteristic.Model, "Thinking Cleaner")
+	.setCharacteristic(Characteristic.SerialNumber, "Unknown")
+	.setCharacteristic(Characteristic.FirmwareRevision, "Unknown");
 
 	if (!this.ip_address) {
 		locateTC.call(this, function(err, cleaner) {
@@ -124,7 +124,7 @@ ThinkingCleaner.prototype = {
 						var tcObj = JSON.parse(response.text);
 
 						if (tcObj.status.cleaning === "1"){
-						    that.log(that.name + ": Cleaning, now stopping");
+							that.log(that.name + ": Cleaning, now stopping");
 							superagent.get(that.ip_address + "/command.json?command=clean").end(function(error, response) {
 								if (error) {
 									that.log("Could not send clean command (to stop) to Thinking Cleaner: %s", error.message);
@@ -167,6 +167,59 @@ ThinkingCleaner.prototype = {
 		});
 	},
 
+	getFullStatus: function(callback) {
+		var url = this.ip_address + "/full_status.json";
+
+		superagent.get(url).end(function(error, response) {
+			if (error) {
+				callback(error);
+			} else {
+				var tcObj = JSON.parse(response.text);
+
+				callback(tcObj);
+			}
+		});
+	},
+
+	getBatteryLevel: function(callback) {
+		this.getFullStatus(function(fullstatus){
+			callback(null, fullstatus.power_status.battery_charge);
+		}.bind(this));
+	},
+
+	getChargingState: function(callback) {
+		this.getFullStatus(function(fullstatus){
+			switch(fullstatus.power_status.cleaner_state) {
+				case "st_base":
+				case "st_base_wait":
+				case "st_plug":
+				case "st_plug_wait":
+				var chargingstate = 0;
+				break;
+
+				case "st_base_recon":
+				case "st_base_full":
+				case "st_base_trickle":
+				case "st_plug_recon":
+				case "st_plug_full":
+				case "st_plug_trickle":
+				var chargingstate = 1;
+				break;
+
+				default:
+				break;
+			}
+
+			callback(null, chargingstate);
+		}.bind(this));
+	},
+
+	getStatusLowBattery: function(callback) {
+		this.getFullStatus(function(fullstatus){
+			callback(null, fullstatus.power_status.low_power);
+		}.bind(this));
+	},
+
 	identify: function(callback) {
 		this.log("Identify requested!");
 		superagent.get(this.ip_address + "/command.json?command=find_me").end(function(error, response) {
@@ -183,14 +236,18 @@ ThinkingCleaner.prototype = {
 		// the default values for things like serial number, model, etc.
 		var that = this;
 		var switchService = new Service.Switch(this.name);
+		var batteryService = new Service.BatteryService(this.name);
 
 		switchService.getCharacteristic(Characteristic.On).on('set', this.setPowerState.bind(this));
 		switchService.getCharacteristic(Characteristic.On).on('get', this.getPowerState.bind(this));
+		batteryService.getCharacteristic(Characteristic.BatteryLevel).on('get', this.getBatteryLevel.bind(this));
+		batteryService.getCharacteristic(Characteristic.ChargingState).on('get', this.getChargingState.bind(this));
+		batteryService.getCharacteristic(Characteristic.StatusLowBattery).on('get', this.getStatusLowBattery.bind(this));
 		//setTimeout(function () {
 		//	that.log("Hey");
 		//		that.informationService.setCharacteristic(Characteristic.SerialNumber, "Hi there!");
 		//}, 10)
 
-		return [this.informationService, switchService];
+		return [this.informationService, switchService, batteryService];
 	}
 };

@@ -20,7 +20,7 @@ If you haven't installed Homebridge yet, use these steps on the Homebridge page 
 
 First of all we are going to install the Thinking Cleaner plugin by executing:
 
-    sudo npm install -g homebridge-thinkingcleaner
+    sudo npm install -g homebridge-thinkingcleaner-mg
 
 As easy as that! Now let's configure the plugin.
 
@@ -63,8 +63,8 @@ If you want to disable docking when you stop (or 'turn off' your Roomba using Si
 Now you should be able to run Homebridge again and the Thinking Cleaner plugin ready for usage:
 
     $ homebridge
-    Loaded plugin: homebridge-thinkingcleaner
-    Registering accessory 'homebridge-thinkingcleaner.Roomba'
+    Loaded plugin: homebridge-thinkingcleaner-mg
+    Registering accessory 'homebridge-thinkingcleaner-mg.Roomba'
     ---
     Loaded config.json with 1 accessories and 0 platforms.
     ---

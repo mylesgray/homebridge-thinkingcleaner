@@ -1,5 +1,11 @@
 # Thinking Cleaner for Homebridge
 
+## Changes over original plugin
+
+- Added Battery service for charging and power level notifications
+
+## Intro
+
 Homebridge is a lightweight NodeJS server you can run on your home network that emulates the iOS HomeKit API. [Learn more about Homebridge](https://github.com/nfarina/homebridge)
 
 This is a plugin to control your Thinking Cleaner via HomeKit. [Learn more about Thinking Cleaner.](http://thinkingcleaner.com)
